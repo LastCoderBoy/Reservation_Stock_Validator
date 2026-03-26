@@ -1,0 +1,6 @@
+# ========================================
+# SERVICE CONFIGURATION
+# ========================================
+spring:
+  application:
+    name: limited-stock-drop
