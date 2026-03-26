@@ -4,3 +4,72 @@
 spring:
   application:
     name: limited-stock-drop
+
+    # ========================================
+    # DATABASE CONFIGURATION
+    # ========================================
+    datasource:
+      url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+      username: ${DB_USER}
+      password: ${DB_PASSWORD}
+      driver-class-name: org.postgresql.Driver
+      hikari:
+        maximum-pool-size: 20
+        minimum-idle: 5
+        connection-timeout: 30000
+        idle-timeout: 600000
+        max-lifetime: 1800000
+        pool-name: ReservationHikariPool
+
+    jpa:
+      hibernate:
+        ddl-auto: update  # Change to 'validate' in production
+      show-sql: false
+      properties:
+        hibernate:
+          dialect: org.hibernate.dialect.PostgreSQLDialect
+          format_sql: true
+      open-in-view: false
+
+  # ========================================
+  # JWT CONFIGURATION
+  # ========================================
+  jwt:
+    secret: ${JWT_SECRET}
+
+  # ========================================
+  # ACTUATOR CONFIGURATION
+  # ========================================
+  management:
+    endpoints:
+      web:
+        exposure:
+          include: health,info,metrics,prometheus
+        base-path: /actuator
+    endpoint:
+      health:
+        show-details: always
+        probes:
+          enabled: true
+    health:
+      livenessState:
+        enabled: true
+      readinessState:
+        enabled: true
+    metrics:
+      tags:
+        application: ${spring.application.name}
+
+  # ========================================
+  # LOGGING CONFIGURATION
+  # ========================================
+  logging:
+    level:
+      root: INFO
+      com.jk.limited_stock_drop: DEBUG
+      org.springframework.security: INFO
+      org.springframework.cloud.netflix.eureka: INFO
+      org.hibernate.SQL: DEBUG
+      org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    file:
+      name: logs/reservation-service.log
