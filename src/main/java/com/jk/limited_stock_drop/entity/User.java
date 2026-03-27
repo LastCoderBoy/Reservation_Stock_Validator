@@ -1,5 +1,6 @@
 package com.jk.limited_stock_drop.entity;
 
+import com.jk.limited_stock_drop.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -46,6 +47,10 @@ public class User {
     @Column(nullable = false)
     @Builder.Default
     private Boolean active = true;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
