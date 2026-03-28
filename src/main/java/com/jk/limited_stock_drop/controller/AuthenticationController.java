@@ -2,8 +2,8 @@ package com.jk.limited_stock_drop.controller;
 
 
 import com.jk.limited_stock_drop.dto.ApiResponse;
-import com.jk.limited_stock_drop.dto.request.LoginRequest;
-import com.jk.limited_stock_drop.dto.response.AuthResponse;
+import com.jk.limited_stock_drop.dto.authorization.request.LoginRequest;
+import com.jk.limited_stock_drop.dto.authorization.response.AuthResponse;
 import com.jk.limited_stock_drop.entity.UserPrincipal;
 import com.jk.limited_stock_drop.service.AuthenticationService;
 import jakarta.servlet.http.HttpServletRequest;

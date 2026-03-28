@@ -1,7 +1,7 @@
 package com.jk.limited_stock_drop.mapper;
 
-import com.jk.limited_stock_drop.dto.response.AuthResponse;
-import com.jk.limited_stock_drop.dto.response.UserSummaryResponse;
+import com.jk.limited_stock_drop.dto.authorization.response.AuthResponse;
+import com.jk.limited_stock_drop.dto.authorization.response.UserSummaryResponse;
 import com.jk.limited_stock_drop.entity.User;
 
 import static com.jk.limited_stock_drop.utils.AppConstants.ACCESS_TOKEN_DURATION_MS;

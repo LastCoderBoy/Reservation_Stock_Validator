@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <springProperty scope="context" name="appName"
+                    source="spring.application.name"
+                    defaultValue="reservation-service"/>
+
+    <property name="LOG_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss} %-5level [%X{method} %X{path}] [user=%X{userId}] [req=%X{requestId}] %logger{36} — %msg%n"/>
+
+    <!-- Console -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- File — logs/reservation-service.log -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/${appName}.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/${appName}-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- Matches: com.jk.limited_stock_drop: DEBUG -->
+    <logger name="com.jk.limited_stock_drop" level="DEBUG"/>
+
+    <!-- Matches: org.springframework.security: INFO -->
+    <logger name="org.springframework.security" level="INFO"/>
+
+    <!-- Matches: org.springframework.cloud.netflix.eureka: INFO -->
+    <logger name="org.springframework.cloud.netflix.eureka" level="INFO"/>
+
+    <!-- Matches: org.hibernate.SQL: DEBUG -->
+    <logger name="org.hibernate.SQL" level="DEBUG"/>
+
+    <!-- Matches: org.hibernate.type.descriptor.sql.BasicBinder: TRACE -->
+    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE"/>
+
+    <springProfile name="dev">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="prod">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+        </root>
+    </springProfile>
+
+</configuration>

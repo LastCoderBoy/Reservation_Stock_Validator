@@ -1,4 +1,4 @@
-package com.jk.limited_stock_drop.dto.response;
+package com.jk.limited_stock_drop.dto.authorization.response;
 
 
 import lombok.*;

@@ -2,8 +2,8 @@ package com.jk.limited_stock_drop.service.impl;
 
 import com.jk.limited_stock_drop.config.AuthCookiesManager;
 import com.jk.limited_stock_drop.config.redis.RedisService;
-import com.jk.limited_stock_drop.dto.request.LoginRequest;
-import com.jk.limited_stock_drop.dto.response.AuthResponse;
+import com.jk.limited_stock_drop.dto.authorization.request.LoginRequest;
+import com.jk.limited_stock_drop.dto.authorization.response.AuthResponse;
 import com.jk.limited_stock_drop.entity.RefreshToken;
 import com.jk.limited_stock_drop.entity.User;
 import com.jk.limited_stock_drop.entity.UserPrincipal;
@@ -12,7 +12,7 @@ import com.jk.limited_stock_drop.exception.InvalidTokenException;
 import com.jk.limited_stock_drop.exception.ResourceNotFoundException;
 import com.jk.limited_stock_drop.exception.UnauthorizedException;
 import com.jk.limited_stock_drop.repository.UserRepository;
-import com.jk.limited_stock_drop.security.JwtTokenProcessor;
+import com.jk.limited_stock_drop.config.security.JwtTokenProcessor;
 import com.jk.limited_stock_drop.service.AuthenticationService;
 import com.jk.limited_stock_drop.service.RefreshTokenService;
 import com.jk.limited_stock_drop.utils.HeaderExtractor;
@@ -72,7 +72,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         // Generate Access Token
         String accessToken = tokenProcessor.generateAccessToken(
                 principal.getId(),
-                principal.getEmail(),
+                principal.getUsername(),
                 principal.getUserRole()
         );
 
@@ -116,10 +116,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         // Generate new Access Token
         Long userId = user.getId();
-        String email = user.getEmail();
+        String username = user.getUsername();
         Role userRole = user.getRole();
 
-        String accessToken = tokenProcessor.generateAccessToken(userId, email, userRole);
+        String accessToken = tokenProcessor.generateAccessToken(userId, username, userRole);
 
         // Set the Refresh token cookie
         cookiesManager.setRefreshTokenCookie(response, newRefreshToken.getToken());
@@ -140,7 +140,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             blacklistAccessToken(authHeader);
 
             cookiesManager.clearRefreshTokenCookie(response);
-            log.info("[AUTH-SERVICE] Logout successful for user ID: {}", userId);
+            log.info("[AUTH-SERVICE] Logout successful");
 
         } catch (ResourceNotFoundException e) {
             log.warn("[AUTH-SERVICE] User not found during logout: {}", e.getMessage());

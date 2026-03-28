@@ -13,11 +13,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 import static com.jk.limited_stock_drop.utils.AppConstants.REFRESH_TOKEN_DURATION_MS;
 
@@ -107,7 +109,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     }
 
     /**
-     * Revoke all refresh tokens for a user (used on password change, logout from all devices)
+     * Revoke all refresh tokens for a user
      */
     @Override
     @Async("taskExecutor")
@@ -119,6 +121,28 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         } catch (Exception e) {
             log.error("[REFRESH-TOKEN-SERVICE] Error revoking refresh tokens for user {}: {}",
                     userId, e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Scheduled cleanup job for expired and old revoked tokens
+     * Runs daily at 2:00 AM
+     * Deletes tokens that are:
+     * 1. Expired
+     * 2. Revoked more than 7 days ago (keep recent revocations for audit)
+     */
+    @Override
+    @Scheduled(cron = "${app.scheduling.token-cleanup-cron}")
+    @Transactional
+    public void cleanupExpiredTokens() {
+        try {
+            Instant now = Instant.now();
+            Instant revokedBeforeTime = now.minus(7, ChronoUnit.DAYS);
+
+            int deletedCount = refreshTokenRepository.deleteExpiredAndRevokedTokens(now, revokedBeforeTime);
+            log.info("[REFRESH-TOKEN-SERVICE] Cleaned up {} expired/old revoked tokens", deletedCount);
+        } catch (Exception e) {
+            log.error("[REFRESH-TOKEN-SERVICE] Error during token cleanup: {}", e.getMessage(), e);
         }
     }
 }

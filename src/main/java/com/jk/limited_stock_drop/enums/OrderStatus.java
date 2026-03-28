@@ -4,5 +4,4 @@ public enum OrderStatus {
     PENDING,      // Order created, awaiting payment
     CONFIRMED,    // Order confirmed/paid
     CANCELLED,    // Order cancelled
-    REFUNDED      // Order refunded
 }

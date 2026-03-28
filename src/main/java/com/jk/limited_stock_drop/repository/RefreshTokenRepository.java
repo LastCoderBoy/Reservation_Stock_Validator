@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.Optional;
 
 @Repository
@@ -20,4 +21,8 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
             "SET rt.revoked = true, rt.revokedAt = CURRENT_TIMESTAMP " +
             "WHERE rt.user.id = :userId AND rt.revoked = false ")
     int revokeAllByUserId(@Param("userId") Long userId);
+
+    @Modifying
+    @Query("DELETE FROM RefreshToken rt WHERE rt.expiresAt < :expirationTime OR (rt.revoked = true AND rt.revokedAt < :revokedBeforeTime)")
+    int deleteExpiredAndRevokedTokens(@Param("expirationTime") Instant expirationTime, @Param("revokedBeforeTime") Instant revokedBeforeTime);
 }

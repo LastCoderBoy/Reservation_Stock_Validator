@@ -1,4 +1,4 @@
-package com.jk.limited_stock_drop.security;
+package com.jk.limited_stock_drop.config.security;
 
 import com.jk.limited_stock_drop.entity.User;
 import com.jk.limited_stock_drop.entity.UserPrincipal;

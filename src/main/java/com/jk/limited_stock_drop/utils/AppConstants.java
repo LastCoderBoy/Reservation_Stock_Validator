@@ -6,13 +6,20 @@ public final class AppConstants {
 
     public static final String API_VERSION = "v1";
     public static final String BASE_PATH = "/api/" + API_VERSION;
+    public static final String ADMIN_PATH = BASE_PATH + "/admin";
     public static final String AUTH_PATH = BASE_PATH + "/auth";
     public static final String ORDER_PATH = BASE_PATH + "/order";
-    public static final String PRODUCT_CATALOG_PATH = BASE_PATH + "/products";
+    public static final String PRODUCTS_PATH = BASE_PATH + "/products";
 
     public static final List<String> PUBLIC_PATHS = List.of(
+            // Authorization endpoints
             AUTH_PATH + "/login",
             AUTH_PATH + "/refresh-token",
+
+            // PRODUCT ENDPOINTS
+            PRODUCTS_PATH,
+            PRODUCTS_PATH + "/{productId}",
+            PRODUCTS_PATH + "/{productId}/stock",
 
             // TODO: Actuator endpoints might be private
             "/actuator/health",
@@ -56,4 +63,19 @@ public final class AppConstants {
     public static final String CACHE_REFRESH_TOKEN_PREFIX = "auth:refresh:token:";
     public static final String CACHE_OTP_PREFIX = "auth:otp:";
     public static final String CACHE_SESSION_PREFIX = "session:";
+
+    // ========== Pagination ==========
+    public static final int DEFAULT_PAGE_NUMBER = 0;
+    public static final int DEFAULT_PAGE_SIZE = 20;
+    public static final int MAX_PAGE_SIZE = 100;
+    public static final String DEFAULT_SORT_DIRECTION = "desc";
+    public static final String DEFAULT_SORT_BY = "name";
+
+    // ========== MDC ==========
+    public static final String MDC_REQUEST_ID = "requestId";
+    public static final String MDC_USER_ID = "userId";
+    public static final String MDC_USERNAME = "username";
+    public static final String MDC_ROLE = "role";
+    public static final String MDC_METHOD = "method";
+    public static final String MDC_PATH = "path";
 }

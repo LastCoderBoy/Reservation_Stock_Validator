@@ -1,4 +1,4 @@
-package com.jk.limited_stock_drop.security;
+package com.jk.limited_stock_drop.config.security;
 
 
 import com.jk.limited_stock_drop.dto.JwtClaimsPayload;
@@ -36,9 +36,7 @@ public class JwtTokenProcessor {
             byte[] decodedBytes = Decoders.BASE64.decode(key);
             this.secretKey = Keys.hmacShaKeyFor(decodedBytes); // throws WeakKeyException if the key is too weak
 
-            log.info("[AUTH-JWT-PROCESSOR] Initialized successfully");
-            log.info("[AUTH-JWT-PROCESSOR] Token validity: {} ms ({} minutes)",
-                    ACCESS_TOKEN_DURATION_MS, ACCESS_TOKEN_DURATION_MS / 60000);
+            log.info("[AUTH-JWT-PROCESSOR] Token initialized successfully");
 
         } catch (IllegalArgumentException ie) {
             log.error("[AUTH-JWT-PROCESSOR] Invalid JWT secret key: {}", ie.getMessage());
@@ -49,7 +47,7 @@ public class JwtTokenProcessor {
         }
     }
 
-    public String generateAccessToken(Long userId, String email, Role userRole) {
+    public String generateAccessToken(Long userId, String username, Role userRole) {
         Map<String, Object> claims = new HashMap<>();
         claims.put(JWT_CLAIM_USER_ID, userId);
         claims.put(JWT_CLAIM_ROLES, userRole);
@@ -60,7 +58,7 @@ public class JwtTokenProcessor {
 
         return Jwts.builder()
                 .claims(claims)
-                .subject(email)
+                .subject(username)
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(secretKey, Jwts.SIG.HS512)
@@ -116,10 +114,10 @@ public class JwtTokenProcessor {
                 return (Role) roles;
             }
 
-            return Role.valueOf(Objects.toString(roles, "USER")); // Default to USER if roles claim is missing or invalid
+            return Role.valueOf(Objects.toString(roles, "ROLE_USER")); // Default to USER if roles claim is missing or invalid
         } catch (Exception e) {
             log.error("[JWT-PROCESSOR] Failed to extract roles from token: {}", e.getMessage());
-            return Role.USER; // Default to USER on error
+            return Role.ROLE_USER; // Default to ROLE_USER on error
         }
     }
 

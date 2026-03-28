@@ -44,6 +44,13 @@ public class AuthenticationExceptionHandler {
                 .body(ApiResponse.error("Validation failed", errors));
     }
 
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException ex) {
+        log.warn("[EXCEPTION] Business rule violated: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.UNPROCESSABLE_CONTENT)
+                .body(ApiResponse.error(ex.getMessage()));
+    }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<Void>> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {

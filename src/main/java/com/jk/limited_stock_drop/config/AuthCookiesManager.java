@@ -5,6 +5,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
@@ -17,10 +18,13 @@ import static com.jk.limited_stock_drop.utils.AppConstants.REFRESH_TOKEN_DURATIO
 @Component
 public class AuthCookiesManager {
 
+    @Value("${app.cookie.secure}")
+    private boolean cookieSecure;
+
     public void setRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
         Cookie cookie = new Cookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken);
         cookie.setHttpOnly(true);
-        cookie.setSecure(false); // TODO: Set to true in production with HTTPS
+        cookie.setSecure(cookieSecure);
         cookie.setPath("/");
         cookie.setMaxAge((int) (REFRESH_TOKEN_DURATION_MS / 1000)); // Convert to seconds
         cookie.setAttribute("SameSite", "Strict");

@@ -1,8 +1,8 @@
-package com.jk.limited_stock_drop.security.config;
+package com.jk.limited_stock_drop.config.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jk.limited_stock_drop.security.CustomUserDetailsService;
-import com.jk.limited_stock_drop.security.filter.JwtFilter;
+import com.jk.limited_stock_drop.config.filter.JwtFilter;
+import com.jk.limited_stock_drop.config.filter.RequestMDCFilter;
 import com.jk.limited_stock_drop.dto.ApiResponse;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +33,7 @@ public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
     private final JwtFilter jwtFilter;
+    private final RequestMDCFilter requestMDCFilter;
     private final PasswordEncoder passwordEncoder;
     private final ObjectMapper objectMapper;
 
@@ -68,6 +69,7 @@ public class SecurityConfig {
                 )
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(requestMDCFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }

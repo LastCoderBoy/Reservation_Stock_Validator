@@ -1,4 +1,4 @@
-package com.jk.limited_stock_drop.security.config;
+package com.jk.limited_stock_drop.config.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
