@@ -37,6 +37,7 @@ public class JwtFilter extends OncePerRequestFilter {
     private final RedisService redisService;
     private final CustomUserDetailsService userDetailsService;
 
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -89,6 +90,12 @@ public class JwtFilter extends OncePerRequestFilter {
             writeErrorResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     "Internal server error");
         }
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return isPublicPath(path);
     }
 
     private void writeErrorResponse(HttpServletResponse response, int status, String message) throws IOException {

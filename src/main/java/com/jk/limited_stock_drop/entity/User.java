@@ -50,11 +50,8 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Role role;
-
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    @Builder.Default
+    private Role role = Role.USER;
 
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)

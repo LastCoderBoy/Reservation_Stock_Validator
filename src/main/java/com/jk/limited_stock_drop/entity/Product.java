@@ -90,6 +90,5 @@ public class Product {
             throw new IllegalStateException("Cannot release more stock than reserved");
         }
         this.reservedStock -= quantity;
-        this.totalStock += quantity; // Restore total stock
     }
 }
