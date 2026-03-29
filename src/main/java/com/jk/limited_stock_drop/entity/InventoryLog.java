@@ -83,12 +83,12 @@ public class InventoryLog {
             .build();
     }
 
-    // Factory method for order completion
-    public static InventoryLog forOrderCompletion(Product product, Order order, int stockBefore) {
+    // Factory method for order confirmation
+    public static InventoryLog forOrderConfirm(Product product, Order order, int stockBefore) {
         return InventoryLog.builder()
             .product(product)
             .order(order)
-            .action(InventoryAction.ORDER_COMPLETED)
+            .action(InventoryAction.ORDER_CONFIRMED)
             .quantityChange(order.getQuantity())
             .stockBefore(stockBefore)
             .stockAfter(stockBefore - order.getQuantity())

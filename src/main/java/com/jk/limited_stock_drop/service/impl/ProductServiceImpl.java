@@ -61,17 +61,8 @@ public class ProductServiceImpl implements ProductService {
                 filterRequest.getPage(),
                 filterRequest.getSize());
 
-        List<ProductSummaryResponse> productList = productPage.getContent().stream()
-                .map(ProductMapper::toSummaryResponse)
-                .toList();
-
-        return new PaginatedResponse<>(
-                productList,
-                productPage.getTotalPages(),
-                productPage.getTotalElements(),
-                productPage.getNumber(),
-                productPage.getSize()
-        );
+        Page<ProductSummaryResponse> responsePage = productPage.map(ProductMapper::toSummaryResponse);
+        return new PaginatedResponse<>(responsePage);
     }
 
     @Transactional(readOnly = true)

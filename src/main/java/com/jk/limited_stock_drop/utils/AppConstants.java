@@ -10,6 +10,7 @@ public final class AppConstants {
     public static final String AUTH_PATH = BASE_PATH + "/auth";
     public static final String ORDER_PATH = BASE_PATH + "/order";
     public static final String PRODUCTS_PATH = BASE_PATH + "/products";
+    public static final String RESERVATIONS_PATH = BASE_PATH + "/reservations";
 
     public static final List<String> PUBLIC_PATHS = List.of(
             // Authorization endpoints

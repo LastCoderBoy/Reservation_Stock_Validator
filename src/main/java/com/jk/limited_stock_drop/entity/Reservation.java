@@ -75,8 +75,8 @@ public class Reservation {
         return Math.max(0, Duration.between(LocalDateTime.now(), expiresAt).getSeconds());
     }
 
-    public void complete() {
-        this.status = ReservationStatus.COMPLETED;
+    public void confirm() {
+        this.status = ReservationStatus.CONFIRMED;
     }
 
     public void expire() {
