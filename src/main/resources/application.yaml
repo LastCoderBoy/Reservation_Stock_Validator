@@ -67,6 +67,12 @@ app:
     token-cleanup-cron: "0 0 2 * * ?"  # Daily at 2:00 AM
     reservation-expiry-cron: "0 */1 * * * ?"  # Every 1 minute (for 5-min expiration check)
 
+    # Alternative: Every 30 seconds (faster response)
+    # reservation-expiry-cron: "0,30 * * * * ?"
+
+    # Alternative: Every 2 minutes (less DB load)
+    # reservation-expiry-cron: "0 */2 * * * ?"
+
 
 
 # ========================================

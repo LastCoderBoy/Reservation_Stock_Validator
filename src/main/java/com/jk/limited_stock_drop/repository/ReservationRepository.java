@@ -27,6 +27,18 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     Page<Reservation> findByUserId(Long userId, Pageable pageable);
 
     /**
+     * Find active reservations for a user (excludes expired PENDING ones)
+     * This shows only:
+     * - PENDING reservations that haven't expired yet
+     * - All CONFIRMED, CANCELLED, EXPIRED reservations (historical data)
+     */
+    @Query("SELECT r FROM Reservation r WHERE r.user.id = :userId " +
+           "AND (r.status != 'PENDING' OR r.expiresAt > :now)")
+    Page<Reservation> findActiveReservationsByUserId(@Param("userId") Long userId,
+                                                      @Param("now") LocalDateTime now,
+                                                      Pageable pageable);
+
+    /**
      * Find reservation by ID and user ID (for authorization)
      */
     Optional<Reservation> findByIdAndUserId(Long reservationId, Long userId);

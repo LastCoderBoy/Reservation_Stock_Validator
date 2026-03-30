@@ -99,10 +99,14 @@ public class ReservationServiceImpl implements ReservationService {
         Pageable pageable = PageRequest.of(filterRequest.getPage(), filterRequest.getSize(), sort);
 
         Page<Reservation> reservationPage;
+        
         if (filterRequest.getStatus() != null) {
+            // User explicitly filtered by status - show all matching that status
             reservationPage = reservationRepository.findByUserIdAndStatus(userId, filterRequest.getStatus(), pageable);
         } else {
-            reservationPage = reservationRepository.findByUserId(userId, pageable);
+            // No filter - smart query that excludes expired PENDING reservations
+            // This prevents showing "zombie" reservations that expired but haven't been cleaned up yet
+            reservationPage = reservationRepository.findActiveReservationsByUserId(userId, LocalDateTime.now(), pageable);
         }
 
         Page<ReservationResponse> responsePage = reservationPage.map(ReservationMapper::toResponse);
@@ -119,6 +123,9 @@ public class ReservationServiceImpl implements ReservationService {
                     log.error("[RESERVATION-SERVICE] Reservation {} not found or unauthorized for user {}", reservationId, userId);
                     return new ResourceNotFoundException("Reservation not found");
                 });
+
+        // Real-time expiry check: Expire immediately if expired (don't wait for scheduler)
+        autoExpireIfNeeded(reservation);
 
         return ReservationMapper.toResponse(reservation);
     }
@@ -240,5 +247,44 @@ public class ReservationServiceImpl implements ReservationService {
                 .quantity(reservation.getQuantity())
                 .totalPrice(totalPrice)
                 .build();
+    }
+
+    /**
+     * Auto-expire reservation if it's expired but still PENDING
+     * This provides real-time expiry without waiting for the scheduler
+     * 
+     * Called on: getReservationById()
+     * Not called on: createReservation, checkout, cancel (they have their own logic)
+     */
+    @Transactional
+    protected void autoExpireIfNeeded(Reservation reservation) {
+        if (reservation.getStatus() == ReservationStatus.PENDING && reservation.isExpired()) {
+            log.info("[RESERVATION-SERVICE] Auto-expiring reservation {} (expired at {})", 
+                    reservation.getId(), reservation.getExpiresAt());
+            
+            Product product = reservation.getProduct();
+            int stockBefore = product.getAvailableStock();
+            
+            // Release stock
+            product.releaseStock(reservation.getQuantity());
+            
+            // Mark as expired
+            reservation.expire();
+            
+            // Log the action
+            InventoryLog inventoryLog = InventoryLog.builder()
+                    .product(product)
+                    .reservation(reservation)
+                    .action(InventoryAction.STOCK_RELEASED)
+                    .quantityChange(reservation.getQuantity())
+                    .stockBefore(stockBefore)
+                    .stockAfter(product.getAvailableStock())
+                    .description("Stock released from expired reservation (real-time validation)")
+                    .build();
+            inventoryLogRepository.save(inventoryLog);
+            
+            log.info("[RESERVATION-SERVICE] Reservation {} auto-expired, released {} units of product {}", 
+                    reservation.getId(), reservation.getQuantity(), product.getId());
+        }
     }
 }

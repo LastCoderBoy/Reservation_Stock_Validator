@@ -8,7 +8,7 @@ public final class AppConstants {
     public static final String BASE_PATH = "/api/" + API_VERSION;
     public static final String ADMIN_PATH = BASE_PATH + "/admin";
     public static final String AUTH_PATH = BASE_PATH + "/auth";
-    public static final String ORDER_PATH = BASE_PATH + "/order";
+    public static final String ORDER_PATH = BASE_PATH + "/orders";
     public static final String PRODUCTS_PATH = BASE_PATH + "/products";
     public static final String RESERVATIONS_PATH = BASE_PATH + "/reservations";
 
@@ -17,14 +17,19 @@ public final class AppConstants {
             AUTH_PATH + "/login",
             AUTH_PATH + "/refresh-token",
 
-            // PRODUCT ENDPOINTS
+            // PRODUCT ENDPOINTS (Public - users can browse without auth)
             PRODUCTS_PATH,
             PRODUCTS_PATH + "/{productId}",
             PRODUCTS_PATH + "/{productId}/stock",
 
-            // TODO: Actuator endpoints might be private
+            // RESERVATION ENDPOINTS (All require authentication)
+            // No public reservation endpoints - users must be logged in to reserve
+
+            // Actuator endpoints
             "/actuator/health",
             "/actuator/info",
+            "/actuator/metrics",
+            "/actuator/prometheus",
 
             // Swagger/API docs
             "/swagger-ui/**",
