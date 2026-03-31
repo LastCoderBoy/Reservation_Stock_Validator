@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+/* Minimal Luxury Theme - Custom Colors */
+@theme {
+  /* Primary - White/Off-white backgrounds */
+  --color-primary-50: #fefefe;
+  --color-primary-100: #f8f7f4;
+  
+  /* Secondary - Warm beige/cream tones */
+  --color-secondary-50: #f5f3f0;
+  --color-secondary-100: #e8e4dc;
+  --color-secondary-200: #d4cfc4;
+  
+  /* Accent - Gold/Bronze */
+  --color-accent-400: #d4af37;
+  --color-accent-500: #c9a332;
+  --color-accent-600: #b8860b;
+  
+  /* Text - Dark charcoal */
+  --color-text-primary: #2c2c2c;
+  --color-text-secondary: #5a5a5a;
+  
+  /* Urgency - Burnt orange/red for low stock */
+  --color-urgency-warning: #d97706;
+  --color-urgency-danger: #dc2626;
+  
+  /* Success - Deep green */
+  --color-success: #059669;
+  
+  /* Error - Warm red */
+  --color-error: #dc2626;
+  
+  /* Fonts */
+  --font-family-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-family-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* Global Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-family-sans);
+  color: var(--color-text-primary);
+  background-color: var(--color-primary-50);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-secondary-50);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-secondary-200);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent-600);
+}
