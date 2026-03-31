@@ -124,6 +124,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         // Set the Refresh token cookie
         cookiesManager.setRefreshTokenCookie(response, newRefreshToken.getToken());
 
+        log.info("[AUTH-SERVICE] Refresh token rotation successful for user: {}", username);
+
         return mapToAuthResponse(user, accessToken);
     }
 

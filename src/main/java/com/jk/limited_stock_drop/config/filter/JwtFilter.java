@@ -4,7 +4,6 @@ import com.jk.limited_stock_drop.config.redis.RedisService;
 import com.jk.limited_stock_drop.config.security.CustomUserDetailsService;
 import com.jk.limited_stock_drop.config.security.JwtTokenProcessor;
 import com.jk.limited_stock_drop.dto.JwtClaimsPayload;
-import com.jk.limited_stock_drop.enums.Role;
 import com.jk.limited_stock_drop.exception.InvalidTokenException;
 import com.jk.limited_stock_drop.utils.TokenUtils;
 import jakarta.servlet.FilterChain;
@@ -13,7 +12,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.MDC;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,7 +24,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Optional;
 
-import static com.jk.limited_stock_drop.utils.AppConstants.*;
+import static com.jk.limited_stock_drop.utils.AppConstants.AUTHORIZATION_HEADER;
+import static com.jk.limited_stock_drop.utils.AppConstants.PUBLIC_PATHS;
 
 @Component
 @Slf4j
@@ -60,15 +59,7 @@ public class JwtFilter extends OncePerRequestFilter {
                 throw new InvalidTokenException("Token is blacklisted");
             }
             JwtClaimsPayload claimsPayload = claimsPayloadOpt.get();
-
-            Long userId = claimsPayload.userId();
             String username = claimsPayload.username();
-            Role userRole = claimsPayload.userRole();
-
-            // ── MDC upgrade: replace "guest" with real identity ──────────
-            MDC.put(MDC_USER_ID,   String.valueOf(userId));
-            MDC.put(MDC_USERNAME,  username);
-            MDC.put(MDC_ROLE,      userRole.name());
 
             // UserPrincipal implements UserDetails
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);

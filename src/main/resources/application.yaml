@@ -4,6 +4,9 @@
 spring:
   application:
     name: limited-stock-drop
+  
+  profiles:
+    active: dev  # Set default profile (dev, prod, or test)
 
   # ========================================
   # DATABASE CONFIGURATION
@@ -61,11 +64,33 @@ jwt:
 # APP CONFIGURATION
 # ========================================
 app:
+  # CORS Configuration
+  cors:
+    allowed-origins:
+      - http://localhost:3000      # React dev server (Create React App)
+      - http://localhost:5173      # Vite dev server
+      - http://localhost:4200      # Angular dev server
+      # Add production domains:
+      # - https://domain.com
+      # - https://www.domain.com
+    allowed-methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+      - OPTIONS
+    allow-credentials: true
+    max-age: 3600  # 1 hour
+
+  # Cookie Configuration
   cookie:
     secure: false  # Set to true in production when using HTTPS
+
+  # Scheduling Configuration
   scheduling:
     token-cleanup-cron: "0 0 2 * * ?"  # Daily at 2:00 AM
-    reservation-expiry-cron: "0 */1 * * * ?"  # Every 1 minute (for 5-min expiration check)
+    reservation-expiry-cron: "0 */1 * * * ?"  # Every 1 minute
 
     # Alternative: Every 30 seconds (faster response)
     # reservation-expiry-cron: "0,30 * * * * ?"
@@ -97,6 +122,7 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
+
 
 # ========================================
 # LOGGING CONFIGURATION

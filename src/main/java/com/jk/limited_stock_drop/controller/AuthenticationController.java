@@ -34,7 +34,7 @@ public class AuthenticationController {
     public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest loginRequest,
                                                            HttpServletRequest request,
                                                            HttpServletResponse response) {
-        log.info("[AUTH-CONTROLLER] Logging the user: {}", loginRequest.getUsername());
+        log.info("Login attempt - Username: {}", loginRequest.getUsername());
 
         AuthResponse authResponse = authService.login(loginRequest, request, response);
         return ResponseEntity.ok(ApiResponse.success("User logged in successfully", authResponse));
@@ -44,7 +44,8 @@ public class AuthenticationController {
     @PostMapping("/refresh-token")
     public ResponseEntity<ApiResponse<AuthResponse>> refreshJwtToken(HttpServletRequest request,
                                                                      HttpServletResponse response) {
-        log.info("[AUTH-CONTROLLER] Refreshing JWT tokens...");
+        log.info("Token refresh attempt");
+        
         AuthResponse authResponse = authService.refreshJwtTokens(request, response);
 
         return ResponseEntity.ok(
@@ -56,7 +57,8 @@ public class AuthenticationController {
     public ResponseEntity<ApiResponse<Void>> logout(@AuthenticationPrincipal UserPrincipal principal,
                                                     HttpServletResponse response, // used for clearing the cookies
                                                     HttpServletRequest request) {
-        log.info("[AUTH-CONTROLLER] Logging out user with ID: {}", principal.getId());
+        log.info("Logout - User ID: {}, Username: {}", 
+                principal.getId(), principal.getUsername());
 
         authService.logout(principal.getId(), response, request);
         return ResponseEntity.ok(ApiResponse.success("User logged out successfully"));

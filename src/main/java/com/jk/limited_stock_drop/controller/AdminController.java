@@ -25,9 +25,14 @@ public class AdminController {
     @PostMapping("/products")
     public ResponseEntity<ApiResponse<ProductResponse>> createProduct(
             @Valid @RequestBody CreateProductRequest request) {
-        log.info("[PRODUCT-CONTROLLER] Creating product with name: {}", request.getName());
+        log.info("ADMIN - Creating product - Name: '{}', Stock: {}, Price: {}", 
+                request.getName(), request.getTotalStock(), request.getPrice());
 
         ProductResponse productResponse = productService.createProduct(request);
+        
+        log.info("ADMIN - Product created successfully - ID: {}, Name: '{}'", 
+                productResponse.getId(), productResponse.getName());
+        
         return ResponseEntity.ok(
                 ApiResponse.success("Product created successfully", productResponse)
         );
@@ -36,9 +41,13 @@ public class AdminController {
     @PatchMapping("/{productId}")
     public ResponseEntity<ApiResponse<ProductResponse>> updateProduct(@PathVariable Long productId,
                                                                       @Valid @RequestBody UpdateProductRequest updateRequest){
-        log.info("[PRODUCT-CONTROLLER] Updating product with ID: {}", productId);
+        log.info("ADMIN - Updating product - ID: {}", productId);
 
         ProductResponse productResponse = productService.updateProduct(productId, updateRequest);
+        
+        log.info("ADMIN - Product updated successfully - ID: {}, Name: '{}'", 
+                productResponse.getId(), productResponse.getName());
+        
         return ResponseEntity.ok(
                 ApiResponse.success("Product updated successfully", productResponse)
         );
@@ -46,9 +55,12 @@ public class AdminController {
 
     @DeleteMapping("/{productId}")
     public ResponseEntity<ApiResponse<Void>> deleteProduct(@PathVariable Long productId){
-        log.info("[PRODUCT-CONTROLLER] Deleting product with ID: {}", productId);
+        log.warn("ADMIN - Deleting product - ID: {}", productId);
 
         productService.deleteProduct(productId);
+        
+        log.info("ADMIN - Product deleted successfully - ID: {}", productId);
+        
         return ResponseEntity.ok(
                 ApiResponse.success("Product deleted successfully")
         );

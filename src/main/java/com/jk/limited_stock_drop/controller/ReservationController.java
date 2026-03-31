@@ -41,9 +41,18 @@ public class ReservationController {
             @ModelAttribute @Valid ReservationFilterRequest filterRequest,
             @AuthenticationPrincipal UserPrincipal principal
     ) {
+        log.debug("Fetching reservations - User: {} (ID: {}), Status: {}", 
+                principal.getUsername(), principal.getId(), filterRequest.getStatus());
 
         PaginatedResponse<ReservationResponse> response = 
                 reservationService.getUserReservations(principal.getId(), filterRequest);
+        
+        log.debug("Reservations fetched - User: {}, Total: {}, Page: {}/{}", 
+                principal.getUsername(), 
+                response.getTotalElements(),
+                response.getCurrentPage() + 1,
+                response.getTotalPages());
+        
         return ResponseEntity.ok(
                 ApiResponse.success("Reservations fetched successfully", response)
         );
@@ -52,10 +61,15 @@ public class ReservationController {
     @GetMapping("/{reservationId}")
     public ResponseEntity<ApiResponse<ReservationResponse>> getReservationById(@PathVariable Long reservationId,
                                                                                @AuthenticationPrincipal UserPrincipal principal) {
-        log.info("[RESERVATION-CONTROLLER] User {} fetching reservation {}", 
-                principal.getId(), reservationId);
+        log.debug("Fetching reservation - User: {} (ID: {}), Reservation ID: {}", 
+                principal.getUsername(), principal.getId(), reservationId);
 
         ReservationResponse response = reservationService.getReservationById(reservationId, principal.getId());
+        
+        log.debug("Reservation fetched - ID: {}, Status: {}, Product: '{}', Quantity: {}", 
+                response.getId(), response.getStatus(), 
+                response.getProductName(), response.getQuantity());
+        
         return ResponseEntity.ok(
                 ApiResponse.success("Reservation fetched successfully", response)
         );
@@ -64,10 +78,15 @@ public class ReservationController {
     @PostMapping("/{reservationId}/checkout")
     public ResponseEntity<ApiResponse<CheckoutResponse>> checkout(@PathVariable Long reservationId,
                                                                   @AuthenticationPrincipal UserPrincipal principal) {
-        log.info("[RESERVATION-CONTROLLER] User {} checking out reservation {}", 
-                principal.getId(), reservationId);
+        log.info("Checkout attempt - User: {} (ID: {}), Reservation ID: {}", 
+                principal.getUsername(), principal.getId(), reservationId);
 
         CheckoutResponse response = reservationService.checkout(reservationId, principal.getId());
+        
+        log.info("Checkout completed - Order ID: {}, User: {}, Total: {}, Product: '{}', Quantity: {}", 
+                response.getOrderId(), principal.getUsername(), response.getTotalPrice(),
+                response.getProductName(), response.getQuantity());
+        
         return ResponseEntity.ok(
                 ApiResponse.success("Checkout completed successfully", response)
         );
@@ -76,10 +95,14 @@ public class ReservationController {
     @PostMapping("/{reservationId}/cancel")
     public ResponseEntity<ApiResponse<Void>> cancelReservation(@PathVariable Long reservationId,
                                                                @AuthenticationPrincipal UserPrincipal principal) {
-        log.info("[RESERVATION-CONTROLLER] User {} cancelling reservation {}", 
-                principal.getId(), reservationId);
+        log.info("Cancellation attempt - User: {} (ID: {}), Reservation ID: {}", 
+                principal.getUsername(), principal.getId(), reservationId);
 
         reservationService.cancelReservation(reservationId, principal.getId());
+        
+        log.info("Reservation cancelled - User: {}, Reservation ID: {}", 
+                principal.getUsername(), reservationId);
+        
         return ResponseEntity.ok(
                 ApiResponse.success("Reservation cancelled successfully")
         );
