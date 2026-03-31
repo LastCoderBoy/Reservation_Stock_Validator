@@ -1,0 +1,5 @@
+name: Global Env
+values:
+  - key: accessToken
+    value: ''
+    enabled: true

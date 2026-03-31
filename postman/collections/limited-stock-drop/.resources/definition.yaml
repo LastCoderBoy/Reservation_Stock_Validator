@@ -1,0 +1,15 @@
+$kind: collection
+name: Limited Stock Drop API
+description: API collection for the Limited Stock Drop application
+variables:
+  baseUrl: http://localhost:8080
+  John_User_username: ""
+  John_User_password: ""
+  Jane_User_username: ""
+  Jane_User_password: ""
+  Bob_Admin_username: ""
+  Bob_Admin_password: ""
+  Charlie_User_username: ""
+  Charlie_User_password: ""
+  Jas_Admin_username: ""
+  Jas_Admin_password: ""

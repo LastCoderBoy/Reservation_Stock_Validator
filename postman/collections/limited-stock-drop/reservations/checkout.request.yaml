@@ -1,0 +1,11 @@
+$kind: http-request
+name: Checkout
+method: POST
+url: '{{baseUrl}}/api/v1/reservations/:reservationId/checkout'
+order: 4000
+headers:
+  - key: Authorization
+    value: 'Bearer {{accessToken}}'
+pathVariables:
+  - key: reservationId
+    value: '1'

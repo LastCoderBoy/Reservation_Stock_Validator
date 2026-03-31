@@ -1,0 +1,11 @@
+$kind: http-request
+name: Get Reservation By ID
+method: GET
+url: '{{baseUrl}}/api/v1/reservations/:reservationId'
+order: 3000
+headers:
+  - key: Authorization
+    value: 'Bearer {{accessToken}}'
+pathVariables:
+  - key: reservationId
+    value: '1'

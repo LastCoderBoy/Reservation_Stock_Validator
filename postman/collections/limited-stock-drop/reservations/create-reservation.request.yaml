@@ -1,0 +1,17 @@
+$kind: http-request
+name: Create Reservation
+method: POST
+url: '{{baseUrl}}/api/v1/reservations'
+order: 1000
+headers:
+  - key: Authorization
+    value: 'Bearer {{accessToken}}'
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "productId": 1,
+      "quantity": 1
+    }

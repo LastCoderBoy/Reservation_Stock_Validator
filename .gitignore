@@ -44,3 +44,45 @@ application-local.properties
 .env
 .env.local
 .env.*.local
+
+# Backup files
+*.backup
+
+# ============================================
+# FRONTEND (React + Vite)
+# ============================================
+
+# Dependencies
+frontend/node_modules/
+frontend/package-lock.json
+
+# Build output
+frontend/dist/
+frontend/build/
+
+# Environment variables
+frontend/.env
+frontend/.env.local
+frontend/.env.production.local
+frontend/.env.development.local
+frontend/.env.test.local
+
+# Editor directories
+frontend/.vscode/
+frontend/.idea/
+
+# OS files
+frontend/.DS_Store
+frontend/Thumbs.db
+
+# Debug logs
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+
+# Testing
+frontend/coverage/
+
+# Vite
+frontend/.vite/

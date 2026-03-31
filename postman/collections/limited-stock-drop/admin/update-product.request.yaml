@@ -1,0 +1,25 @@
+$kind: http-request
+name: Update Product
+method: PATCH
+url: '{{baseUrl}}/api/v1/admin/:productId'
+order: 2000
+headers:
+  - key: Authorization
+    value: 'Bearer {{accessToken}}'
+  - key: Content-Type
+    value: application/json
+pathVariables:
+  - key: productId
+    value: '1'
+body:
+  type: json
+  content: |-
+    {
+      "name": "Updated Product Name",
+      "description": "Updated description",
+      "price": 79.99,
+      "imageKey": "images/updated.jpg",
+      "totalStock": 150,
+      "category": "WOMEN",
+      "active": true
+    }

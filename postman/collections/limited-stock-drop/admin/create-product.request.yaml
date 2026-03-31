@@ -1,0 +1,22 @@
+$kind: http-request
+name: Create Product
+method: POST
+url: '{{baseUrl}}/api/v1/admin/products'
+order: 1000
+headers:
+  - key: Authorization
+    value: 'Bearer {{accessToken}}'
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Sample Product",
+      "description": "Product description here",
+      "price": 99.99,
+      "imageKey": "images/sample.jpg",
+      "totalStock": 100,
+      "category": "MEN",
+      "active": true
+    }
