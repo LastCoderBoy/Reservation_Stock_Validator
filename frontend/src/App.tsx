@@ -1,47 +1,50 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Toaster } from 'sonner';
-import { AuthProvider } from './contexts';
-import { ProtectedRoute } from './routes';
-import { HomePage, LoginPage, ProductDetailPage, ReservationsPage, ComponentShowcasePage } from './pages';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from './contexts/AuthContext';
+import { Navbar } from './components/Navbar';
+import { ProductsPage } from './pages/ProductsPage';
+import { ProductDetailPage } from './pages/ProductDetailPage';
+import { LoginPage } from './pages/LoginPage';
+import { ReservationsPage } from './pages/ReservationsPage';
 
-function App() {
-  return (
-    <BrowserRouter>
-      <AuthProvider>
-        {/* Sonner Toast Notifications */}
-        <Toaster 
-          position="top-right" 
-          richColors 
-          closeButton
-          toastOptions={{
-            style: {
-              fontFamily: 'Inter, system-ui, sans-serif',
-            },
-          }}
-        />
+const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            retry: 1,
+            staleTime: 30_000,
+        },
+    },
+});
 
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/products/:id" element={<ProductDetailPage />} />
-          
-          {/* Component Showcase (dev only) */}
-          <Route path="/components" element={<ComponentShowcasePage />} />
+// Navbar is hidden on the login page — it has its own full-screen layout
+const Layout = ({ children }: { children: React.ReactNode }) => {
+    const { pathname } = useLocation();
+    const hideNavbar = pathname === '/login';
+    return (
+        <>
+            {!hideNavbar && <Navbar />}
+            {children}
+        </>
+    );
+};
 
-          {/* Protected Routes */}
-          <Route
-            path="/reservations"
-            element={
-              <ProtectedRoute>
-                <ReservationsPage />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </AuthProvider>
-    </BrowserRouter>
-  );
+export default function App() {
+    return (
+        <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+                <BrowserRouter>
+                    <Layout>
+                        <Routes>
+                            <Route path="/"                element={<Navigate to="/products" replace />} />
+                            <Route path="/products"        element={<ProductsPage />} />
+                            <Route path="/products/:id"    element={<ProductDetailPage />} />
+                            <Route path="/login"           element={<LoginPage />} />
+                            <Route path="/reservations"    element={<ReservationsPage />} />
+                            <Route path="*"               element={<Navigate to="/products" replace />} />
+                        </Routes>
+                    </Layout>
+                </BrowserRouter>
+            </AuthProvider>
+        </QueryClientProvider>
+    );
 }
-
-export default App;

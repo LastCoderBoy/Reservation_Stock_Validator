@@ -1,83 +1,57 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import { authApi } from '../api';
-import type { User, LoginRequest } from '../types';
+import type { AuthUser } from '../types';
 
-interface AuthContextType {
-  user: User | null;
+interface AuthContextValue {
+  user: AuthUser | null;
   isAuthenticated: boolean;
-  isLoading: boolean;
-  login: (credentials: LoginRequest) => Promise<void>;
-  logout: () => Promise<void>;
-  checkAuth: () => Promise<void>;
+  login: (user: AuthUser, token: string) => void;
+  logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextValue | null>(null);
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const checkAuth = async () => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) {
-      setIsLoading(false);
-      return;
-    }
-
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<AuthUser | null>(() => {
     try {
-      const currentUser = await authApi.getCurrentUser();
-      setUser(currentUser);
-    } catch (error) {
-      // Token invalid or expired
-      localStorage.removeItem('accessToken');
-      setUser(null);
-    } finally {
-      setIsLoading(false);
+      const stored = localStorage.getItem('authUser');
+      return stored ? (JSON.parse(stored) as AuthUser) : null;
+    } catch {
+      return null;
     }
+  });
+
+  const login = (authUser: AuthUser, token: string) => {
+    localStorage.setItem('accessToken', token);
+    localStorage.setItem('authUser', JSON.stringify(authUser));
+    setUser(authUser);
   };
 
-  const login = async (credentials: LoginRequest) => {
-    const response = await authApi.login(credentials);
-    localStorage.setItem('accessToken', response.accessToken);
-    setUser(response.user);
+  const logout = () => {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('authUser');
+    setUser(null);
   };
 
-  const logout = async () => {
-    try {
-      await authApi.logout();
-    } catch (error) {
-      // Ignore logout errors
-      console.error('Logout error:', error);
-    } finally {
-      localStorage.removeItem('accessToken');
-      setUser(null);
-    }
-  };
-
+  // Sync across tabs
   useEffect(() => {
-    checkAuth();
+    const handler = (e: StorageEvent) => {
+      if (e.key === 'accessToken' && !e.newValue) {
+        setUser(null);
+      }
+    };
+    window.addEventListener('storage', handler);
+    return () => window.removeEventListener('storage', handler);
   }, []);
 
-  const value: AuthContextType = {
-    user,
-    isAuthenticated: !!user,
-    isLoading,
-    login,
-    logout,
-    checkAuth,
-  };
+  return (
+      <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout }}>
+        {children}
+      </AuthContext.Provider>
+  );
+};
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+export const useAuth = (): AuthContextValue => {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
+  return ctx;
 };

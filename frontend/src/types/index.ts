@@ -1,101 +1,105 @@
-// User Types
-export interface User {
-  id: number;
-  username: string;
-  email: string;
-  fullName: string;
-  phoneNumber: string | null;
-  role: 'USER' | 'ADMIN';
-  createdAt: string;
+export type Category = 'MEN' | 'WOMEN' | 'KIDS';
+
+export type ReservationStatus = 'PENDING' | 'CONFIRMED' | 'EXPIRED' | 'CANCELLED';
+
+export type SortField = 'name' | 'price' | 'stock';
+
+export type SortDirection = 'asc' | 'desc';
+
+// ─── API Wrappers ────────────────────────────────────────────────────────────
+
+export interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
 }
 
-// Product Types
+export interface PaginatedResponse<T> {
+  content: T[];
+  totalPages: number;
+  totalElements: number;
+  currentPage: number;
+  size: number;
+}
+
+// ─── Product ─────────────────────────────────────────────────────────────────
+
 export interface Product {
   id: number;
   name: string;
   description: string;
   price: number;
-  totalStock: number;
-  reservedStock: number;
+  imageKey: string | null;
   availableStock: number;
-  imageUrl: string | null;
-  category: string | null;
+  totalStock: number;
+  category: Category;
+  active: boolean;
+}
+
+export interface ProductDetail extends Product {
   createdAt: string;
   updatedAt: string;
 }
 
-// Reservation Types
-export type ReservationStatus = 'PENDING' | 'CONFIRMED' | 'EXPIRED' | 'CANCELLED';
+export interface StockResponse {
+  productId: number;
+  availableStock: number;
+  totalStock: number;
+  reservedStock: number;
+}
+
+export interface ProductFilterParams {
+  page?: number;
+  size?: number;
+  sortBy?: SortField;
+  sortDirection?: SortDirection;
+  search?: string;
+  category?: Category;
+  inStock?: boolean;
+  minPrice?: number;
+  maxPrice?: number;
+}
+
+// ─── Reservation ─────────────────────────────────────────────────────────────
 
 export interface Reservation {
   id: number;
-  userId: number;
   productId: number;
+  productName: string;
   quantity: number;
   status: ReservationStatus;
   expiresAt: string;
   createdAt: string;
-  productName?: string;
-  productPrice?: number;
+  remainingSeconds: number;
 }
 
-// Auth Types
-export interface LoginRequest {
-  username: string;
-  password: string;
+export interface CheckoutResponse {
+  orderId: number;
+  productName: string;
+  quantity: number;
+  totalPrice: number;
+  status: string;
 }
 
-export interface LoginResponse {
-  user: User;
-  accessToken: string;
-}
-
-// API Response Wrapper
-export interface ApiResponse<T> {
-  success: boolean;
-  message: string;
-  data: T;
-  timestamp: string;
-}
-
-export interface PaginatedResponse<T> {
-  content: T[];
-  pageNumber: number;
-  pageSize: number;
-  totalElements: number;
-  totalPages: number;
-  last: boolean;
-}
-
-// Reservation Request/Response
 export interface CreateReservationRequest {
   productId: number;
   quantity: number;
 }
 
-export interface ReservationResponse {
-  id: number;
-  productId: number;
-  productName: string;
-  productPrice: number;
-  quantity: number;
-  totalPrice: number;
-  status: ReservationStatus;
-  expiresAt: string;
-  createdAt: string;
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+
+export interface AuthResponse {
+  accessToken: string;
+  username: string;
+  role: string;
 }
 
-export interface CheckoutResponse {
-  orderId: number;
-  reservationId: number;
-  totalAmount: number;
-  orderDate: string;
-  message: string;
+export interface LoginRequest {
+  username: string;
+  password: string;
 }
 
-// Error Types
-export interface ApiError {
-  message: string;
-  status: number;
-  timestamp: string;
+export interface AuthUser {
+  username: string;
+  role: string;
 }

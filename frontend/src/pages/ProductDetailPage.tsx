@@ -1,246 +1,177 @@
-import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { toast } from 'sonner';
-import { productApi, reservationApi } from '../api';
-import type { Product } from '../types';
-import { useAuth } from '../contexts';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useProduct } from '../hooks/useProduct';
+import { ReservePanel } from '../components/reservation/ReservePanel';
+import { Badge, Spinner, ErrorMessage } from '../components/ui';
+import { formatPrice, formatDate, stockPercentage } from '../utils/formatters';
 
 export const ProductDetailPage = () => {
   const { id } = useParams<{ id: string }>();
-  const [product, setProduct] = useState<Product | null>(null);
-  const [quantity, setQuantity] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isReserving, setIsReserving] = useState(false);
-  const { user } = useAuth();
   const navigate = useNavigate();
+  const productId = Number(id);
 
-  useEffect(() => {
-    const fetchProduct = async () => {
-      if (!id) return;
-      
-      try {
-        const data = await productApi.getProductById(Number(id));
-        setProduct(data);
-      } catch (error: any) {
-        toast.error(error.message || 'Failed to load product');
-        navigate('/');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchProduct();
-
-    // Poll for stock updates every 5 seconds
-    const interval = setInterval(() => {
-      fetchProduct();
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [id, navigate]);
-
-  const handleQuantityChange = (delta: number) => {
-    if (!product) return;
-    
-    const newQuantity = quantity + delta;
-    if (newQuantity < 1) return;
-    if (newQuantity > product.availableStock) {
-      toast.error(`Only ${product.availableStock} items available`);
-      return;
-    }
-    setQuantity(newQuantity);
-  };
-
-  const handleReserve = async () => {
-    if (!product || !user) {
-      navigate(`/login?returnUrl=/products/${id}`);
-      return;
-    }
-
-    if (product.availableStock < quantity) {
-      toast.error('Not enough stock available');
-      return;
-    }
-
-    setIsReserving(true);
-    try {
-      await reservationApi.createReservation({
-        productId: product.id,
-        quantity,
-      });
-
-      toast.success(`Reserved ${quantity} ${product.name}! You have 5 minutes to complete checkout.`);
-      navigate('/reservations');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to create reservation');
-    } finally {
-      setIsReserving(false);
-    }
-  };
-
-  const getStockIndicator = (availableStock: number) => {
-    if (availableStock === 0) {
-      return { text: 'Sold Out', color: 'bg-text-secondary/10 text-text-secondary', icon: '❌' };
-    } else if (availableStock <= 5) {
-      return { text: `Only ${availableStock} left!`, color: 'bg-urgency-danger/10 text-urgency-danger', icon: '⚠️' };
-    } else if (availableStock <= 20) {
-      return { text: `${availableStock} left`, color: 'bg-urgency-warning/10 text-urgency-warning', icon: '🔥' };
-    } else {
-      return { text: `${availableStock} available`, color: 'bg-success/10 text-success', icon: '✅' };
-    }
-  };
+  const { data: product, isLoading, isError, refetch } = useProduct(productId);
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-primary-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-600"></div>
-      </div>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <Spinner size="lg" />
+        </div>
     );
   }
 
-  if (!product) {
-    return null;
+  if (isError || !product) {
+    return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <ErrorMessage
+              message="Failed to load product."
+              onRetry={() => refetch()}
+          />
+        </div>
+    );
   }
 
-  const stockInfo = getStockIndicator(product.availableStock);
+  const stockPct = stockPercentage(product.availableStock, product.totalStock);
   const isSoldOut = product.availableStock === 0;
+  const isLowStock = !isSoldOut && product.availableStock <= 5;
 
   return (
-    <div className="min-h-screen bg-primary-50">
-      {/* Header */}
-      <header className="bg-primary-100 border-b border-secondary-200 py-4 px-6">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link to="/" className="text-2xl font-bold text-text-primary hover:text-accent-600 transition-colors">
-            Limited <span className="text-accent-600">Drop</span>
-          </Link>
-          <nav className="flex gap-6">
-            <Link to="/" className="text-text-secondary hover:text-accent-600 transition-colors">
-              Products
-            </Link>
-            {user && (
-              <Link to="/reservations" className="text-text-secondary hover:text-accent-600 transition-colors">
-                My Reservations
+      <div className="min-h-screen bg-gray-50">
+        {/* Breadcrumb */}
+        <div className="bg-white border-b border-gray-100">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <nav className="flex items-center gap-2 text-sm text-gray-400">
+              <Link to="/products" className="hover:text-indigo-600 transition-colors">
+                Products
               </Link>
-            )}
-          </nav>
+              <span>/</span>
+              <span className="text-gray-700 font-medium truncate">{product.name}</span>
+            </nav>
+          </div>
         </div>
-      </header>
 
-      {/* Back Button */}
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        <Link
-          to="/"
-          className="inline-flex items-center gap-2 text-text-secondary hover:text-accent-600 transition-colors font-semibold"
-        >
-          ← Back to Products
-        </Link>
-      </div>
+        {/* Main */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
 
-      {/* Product Detail */}
-      <main className="max-w-7xl mx-auto px-6 pb-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Left: Product Image */}
-          <div>
-            <div className="aspect-square bg-secondary-50 rounded-lg flex items-center justify-center border border-secondary-200 overflow-hidden">
-              {product.imageUrl ? (
-                <img
-                  src={product.imageUrl}
-                  alt={product.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <span className="text-9xl">📦</span>
+            {/* Left — Image */}
+            <div className="space-y-4">
+              <div className="relative aspect-square bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                {product.imageKey ? (
+                    <img
+                        src={product.imageKey}
+                        alt={product.name}
+                        className="w-full h-full object-cover"
+                    />
+                ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-3">
+                  <span className="text-8xl select-none text-gray-200">
+                    {product.category === 'KIDS' ? '👟' : '👕'}
+                  </span>
+                      <span className="text-sm text-gray-300">No image available</span>
+                    </div>
+                )}
+
+                {isSoldOut && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                  <span className="bg-white text-gray-800 font-bold text-lg px-6 py-2 rounded-full">
+                    Sold Out
+                  </span>
+                    </div>
+                )}
+              </div>
+
+              {/* Stock bar */}
+              {!isSoldOut && (
+                  <div className="bg-white rounded-xl border border-gray-100 p-4 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Stock availability</span>
+                      <span className={`font-medium ${
+                          isLowStock ? 'text-amber-600' : 'text-gray-700'
+                      }`}>
+                    {product.availableStock} of {product.totalStock} left
+                  </span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                          className={`h-full rounded-full transition-all duration-500 ${
+                              stockPct > 50 ? 'bg-green-400' :
+                                  stockPct > 20 ? 'bg-yellow-400' : 'bg-red-400'
+                          }`}
+                          style={{ width: `${stockPct}%` }}
+                      />
+                    </div>
+                    {isLowStock && (
+                        <p className="text-xs text-amber-600 font-medium">
+                          Only {product.availableStock} left — reserve now!
+                        </p>
+                    )}
+                  </div>
               )}
             </div>
-          </div>
 
-          {/* Right: Product Info */}
-          <div>
-            <h1 className="text-4xl font-bold text-text-primary mb-4">
-              {product.name}
-            </h1>
-
-            <div className="flex items-center gap-4 mb-6">
-              <span className="text-4xl font-bold text-accent-600">
-                ${product.price.toFixed(2)}
-              </span>
-              <span className={`px-3 py-1 rounded-full text-sm font-semibold ${stockInfo.color}`}>
-                {stockInfo.icon} {stockInfo.text}
-              </span>
-            </div>
-
-            <div className="border-t border-secondary-200 pt-6 mb-6">
-              <h3 className="text-sm font-semibold text-text-secondary mb-2">
-                DESCRIPTION
-              </h3>
-              <p className="text-text-primary leading-relaxed">
-                {product.description || 'This is a limited edition product with exclusive features. High demand and limited stock make this a must-have item. Reserve now before it\'s gone!'}
-              </p>
-            </div>
-
-            {/* Quantity Selector */}
-            {!isSoldOut && (
-              <div className="mb-6">
-                <label className="block text-sm font-semibold text-text-primary mb-2">
-                  Quantity
-                </label>
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => handleQuantityChange(-1)}
-                    disabled={quantity <= 1}
-                    className="w-10 h-10 rounded-lg border border-secondary-200 hover:border-accent-600 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed font-bold text-lg"
-                  >
-                    -
-                  </button>
-                  <input
-                    type="number"
-                    value={quantity}
-                    readOnly
-                    className="w-20 text-center py-2 border border-secondary-200 rounded-lg font-semibold text-lg"
-                  />
-                  <button
-                    onClick={() => handleQuantityChange(1)}
-                    disabled={quantity >= product.availableStock}
-                    className="w-10 h-10 rounded-lg border border-secondary-200 hover:border-accent-600 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed font-bold text-lg"
-                  >
-                    +
-                  </button>
+            {/* Right — Info + Reserve */}
+            <div className="space-y-6">
+              {/* Header */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge variant="indigo">{product.category}</Badge>
+                  {isSoldOut && <Badge variant="red">Sold out</Badge>}
+                  {isLowStock && <Badge variant="yellow">Low stock</Badge>}
+                  {!product.active && <Badge variant="gray">Inactive</Badge>}
                 </div>
+
+                <h1 className="text-3xl font-bold text-gray-900 leading-tight">
+                  {product.name}
+                </h1>
+
+                <p className="text-3xl font-bold text-indigo-600">
+                  {formatPrice(product.price)}
+                </p>
               </div>
-            )}
 
-            {/* Reserve Button */}
-            <button
-              onClick={handleReserve}
-              disabled={isSoldOut || isReserving}
-              className={`w-full py-4 rounded-lg font-bold text-lg transition-all focus:outline-none focus:ring-2 focus:ring-accent-600 focus:ring-offset-2 ${
-                isSoldOut
-                  ? 'bg-secondary-200 text-text-secondary cursor-not-allowed'
-                  : isReserving
-                  ? 'bg-accent-500 text-white cursor-wait'
-                  : 'bg-accent-600 text-white hover:bg-accent-500'
-              }`}
-            >
-              {isSoldOut ? '❌ Sold Out' : isReserving ? 'Reserving...' : '🚀 Reserve Now'}
-            </button>
+              {/* Description */}
+              {product.description && (
+                  <div className="prose prose-sm text-gray-600 max-w-none">
+                    <p className="leading-relaxed">{product.description}</p>
+                  </div>
+              )}
 
-            <p className="mt-4 text-sm text-text-secondary text-center">
-              {!isSoldOut && '⏱️ Reservation locks stock for 5 minutes'}
-            </p>
+              {/* Live stock indicator */}
+              <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                Stock updates every 5 seconds
+              </div>
 
-            {/* Additional Info */}
-            <div className="mt-8 p-4 bg-secondary-50 rounded-lg border border-secondary-200">
-              <h4 className="font-semibold text-text-primary mb-2">Product Details:</h4>
-              <ul className="space-y-1 text-sm text-text-secondary">
-                <li>• Total Stock: {product.totalStock}</li>
-                <li>• Reserved: {product.reservedStock}</li>
-                <li>• Available: {product.availableStock}</li>
-                {product.category && <li>• Category: {product.category}</li>}
-              </ul>
+              {/* Divider */}
+              <div className="border-t border-gray-100" />
+
+              {/* Reserve Panel */}
+              <ReservePanel
+                  productId={product.id}
+                  productName={product.name}
+                  price={product.price}
+                  availableStock={product.availableStock}
+              />
+
+              {/* Meta */}
+              <div className="text-xs text-gray-300 space-y-1 pt-2">
+                {'createdAt' in product && (
+                    <p>Listed {formatDate((product as { createdAt: string }).createdAt)}</p>
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </main>
-    </div>
+
+        {/* Back button */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
+          <button
+              onClick={() => navigate(-1)}
+              className="text-sm text-gray-400 hover:text-indigo-600 transition-colors flex items-center gap-1"
+          >
+            ← Back to products
+          </button>
+        </div>
+      </div>
   );
 };

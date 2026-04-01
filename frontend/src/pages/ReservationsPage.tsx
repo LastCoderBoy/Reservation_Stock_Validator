@@ -1,266 +1,185 @@
-import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-import { reservationApi } from '../api';
-import type { ReservationResponse, ReservationStatus as RS } from '../types';
-import { CountdownTimer } from '../components/features';
-import { useAuth } from '../contexts';
+import { useState } from 'react';
+import { Link, Navigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { useMyReservations, useReservationActions } from '../hooks/useReservations';
+import { ReservationCard } from '../components/reservation/ReservationCard';
+import { Pagination, Spinner, ErrorMessage } from '../components/ui';
+import type { ReservationStatus } from '../types';
+
+// ─── Status filter tabs ───────────────────────────────────────────
+const STATUS_TABS: { label: string; value: ReservationStatus | undefined }[] = [
+    { label: 'All',       value: undefined },
+    { label: 'Pending',   value: 'PENDING' },
+    { label: 'Confirmed', value: 'CONFIRMED' },
+    { label: 'Expired',   value: 'EXPIRED' },
+    { label: 'Cancelled', value: 'CANCELLED' },
+];
+
+const PAGE_SIZE = 8;
 
 export const ReservationsPage = () => {
-  const [activeReservations, setActiveReservations] = useState<ReservationResponse[]>([]);
-  const [historyReservations, setHistoryReservations] = useState<ReservationResponse[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+    const { isAuthenticated, user } = useAuth();
+    const [activeStatus, setActiveStatus] = useState<ReservationStatus | undefined>(undefined);
+    const [page, setPage] = useState(0);
 
-  const fetchReservations = async () => {
-    try {
-      const response = await reservationApi.getUserReservations({ size: 50 });
-      
-      // Separate active (PENDING) from history (CONFIRMED, EXPIRED, CANCELLED)
-      const active = response.content.filter(r => r.status === 'PENDING');
-      const history = response.content.filter(r => r.status !== 'PENDING');
-      
-      setActiveReservations(active);
-      setHistoryReservations(history);
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to load reservations');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    const { checkout, cancel, isCheckingOut, isCancelling, checkoutingId, cancellingId } =
+        useReservationActions();
 
-  useEffect(() => {
-    fetchReservations();
+    const { data, isLoading, isError, refetch } = useMyReservations({
+        page,
+        size: PAGE_SIZE,
+        status: activeStatus,
+    });
 
-    // Refresh every 10 seconds
-    const interval = setInterval(() => {
-      fetchReservations();
-    }, 10000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleCheckout = async (id: number) => {
-    try {
-      const response = await reservationApi.checkout(id);
-      toast.success(response.message || 'Order placed successfully!');
-      fetchReservations(); // Refresh list
-    } catch (error: any) {
-      toast.error(error.message || 'Checkout failed');
-    }
-  };
-
-  const handleCancel = async (id: number) => {
-    if (!confirm('Are you sure you want to cancel this reservation?')) {
-      return;
+    // ── Guard — must be logged in ─────────────────────────────────
+    if (!isAuthenticated) {
+        return <Navigate to="/login" state={{ from: '/reservations' }} replace />;
     }
 
-    try {
-      await reservationApi.cancelReservation(id);
-      toast.success('Reservation cancelled successfully');
-      fetchReservations(); // Refresh list
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to cancel reservation');
-    }
-  };
+    const reservations = data?.content ?? [];
+    const totalPages = data?.totalPages ?? 0;
+    const totalElements = data?.totalElements ?? 0;
+    const currentPage = data?.currentPage ?? 0;
 
-  const handleExpire = (id: number) => {
-    // When timer expires, mark reservation as expired in UI
-    setActiveReservations(prev => prev.filter(r => r.id !== id));
-    toast.error('Reservation expired!');
-    fetchReservations(); // Refresh from server
-  };
+    const handleTabChange = (status: ReservationStatus | undefined) => {
+        setActiveStatus(status);
+        setPage(0);
+    };
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      toast.success('Logged out successfully');
-      navigate('/');
-    } catch (error) {
-      toast.error('Logout failed');
-    }
-  };
+    const pendingCount = reservations.filter(r => r.status === 'PENDING').length;
 
-  const getStatusBadge = (status: RS) => {
-    switch (status) {
-      case 'PENDING':
-        return 'px-3 py-1 bg-urgency-warning/10 text-urgency-warning rounded-full text-sm font-semibold';
-      case 'CONFIRMED':
-        return 'px-3 py-1 bg-success/10 text-success rounded-full text-sm font-semibold';
-      case 'EXPIRED':
-        return 'px-3 py-1 bg-text-secondary/10 text-text-secondary rounded-full text-sm font-semibold';
-      case 'CANCELLED':
-        return 'px-3 py-1 bg-text-secondary/10 text-text-secondary rounded-full text-sm font-semibold';
-      default:
-        return 'px-3 py-1 bg-secondary-200 text-text-secondary rounded-full text-sm font-semibold';
-    }
-  };
-
-  const getStatusIcon = (status: RS) => {
-    switch (status) {
-      case 'CONFIRMED':
-        return '✓';
-      case 'EXPIRED':
-        return '⏰';
-      case 'CANCELLED':
-        return '✕';
-      default:
-        return '';
-    }
-  };
-
-  if (isLoading) {
     return (
-      <div className="min-h-screen bg-primary-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-600"></div>
-      </div>
-    );
-  }
+        <div className="min-h-screen bg-gray-50">
 
-  return (
-    <div className="min-h-screen bg-primary-50">
-      {/* Header */}
-      <header className="bg-primary-100 border-b border-secondary-200 py-4 px-6">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link to="/" className="text-2xl font-bold text-text-primary hover:text-accent-600 transition-colors">
-            Limited <span className="text-accent-600">Drop</span>
-          </Link>
-          <nav className="flex items-center gap-6">
-            <Link to="/" className="text-text-secondary hover:text-accent-600 transition-colors">
-              Products
-            </Link>
-            <Link to="/reservations" className="text-accent-600 font-semibold">
-              My Reservations
-            </Link>
-            {user && (
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-text-secondary">
-                  👤 {user.username}
-                </span>
-                <button
-                  onClick={handleLogout}
-                  className="text-sm text-text-secondary hover:text-error transition-colors"
-                >
-                  Logout
-                </button>
-              </div>
-            )}
-          </nav>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-5xl mx-auto px-6 py-12">
-        <h1 className="text-4xl font-bold text-text-primary mb-8">
-          My Reservations
-        </h1>
-
-        {/* Active Reservations */}
-        <section className="mb-12">
-          <h2 className="text-2xl font-semibold text-text-primary mb-4 flex items-center gap-2">
-            <span>⏱️</span> Active Reservations
-          </h2>
-
-          {activeReservations.length === 0 ? (
-            <div className="bg-white rounded-lg border border-secondary-200 p-8 text-center">
-              <span className="text-4xl mb-2 block">📭</span>
-              <p className="text-text-secondary">No active reservations</p>
-              <Link
-                to="/"
-                className="inline-block mt-4 px-6 py-2 bg-accent-600 text-white rounded-lg font-semibold hover:bg-accent-500 transition-colors"
-              >
-                Browse Products
-              </Link>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {activeReservations.map((reservation) => (
-                <div
-                  key={reservation.id}
-                  className="bg-white rounded-lg border border-secondary-200 shadow-md p-6"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="text-xl font-semibold text-text-primary">
-                        {reservation.productName}
-                      </h3>
-                      <p className="text-text-secondary">
-                        Quantity: {reservation.quantity} × ${reservation.productPrice.toFixed(2)} = ${reservation.totalPrice.toFixed(2)}
-                      </p>
+            {/* ── Header ─────────────────────────────────────────────── */}
+            <div className="bg-white border-b border-gray-100">
+                <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                    <div className="flex items-center justify-between flex-wrap gap-3">
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-900">My Reservations</h1>
+                            <p className="text-sm text-gray-400 mt-0.5">
+                                {user?.username} · {totalElements} total
+                            </p>
+                        </div>
+                        <Link
+                            to="/products"
+                            className="text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+                        >
+                            ← Browse products
+                        </Link>
                     </div>
-                    <span className={getStatusBadge(reservation.status)}>
-                      {reservation.status}
-                    </span>
-                  </div>
 
-                  {/* Countdown Timer */}
-                  <div className="mb-6">
-                    <CountdownTimer
-                      expiresAt={reservation.expiresAt}
-                      onExpire={() => handleExpire(reservation.id)}
+                    {/* ── Status tabs ──────────────────────────────────── */}
+                    <div className="flex items-center gap-1 mt-5 overflow-x-auto pb-px">
+                        {STATUS_TABS.map(tab => (
+                            <button
+                                key={tab.label}
+                                onClick={() => handleTabChange(tab.value)}
+                                className={[
+                                    'flex-shrink-0 px-4 py-1.5 text-sm font-medium rounded-lg transition-colors',
+                                    activeStatus === tab.value
+                                        ? 'bg-indigo-600 text-white'
+                                        : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100',
+                                ].join(' ')}
+                            >
+                                {tab.label}
+                                {tab.value === 'PENDING' && pendingCount > 0 && (
+                                    <span className="ml-1.5 inline-flex items-center justify-center
+                                   w-4 h-4 rounded-full bg-amber-400 text-white
+                                   text-[10px] font-bold">
+                    {pendingCount}
+                  </span>
+                                )}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* ── Body ───────────────────────────────────────────────── */}
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+                {/* Loading */}
+                {isLoading && (
+                    <div className="flex items-center justify-center py-24">
+                        <Spinner size="lg" />
+                    </div>
+                )}
+
+                {/* Error */}
+                {isError && (
+                    <ErrorMessage
+                        message="Failed to load reservations."
+                        onRetry={() => refetch()}
                     />
-                  </div>
+                )}
 
-                  {/* Actions */}
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => handleCheckout(reservation.id)}
-                      className="flex-1 py-3 bg-accent-600 text-white rounded-lg font-semibold hover:bg-accent-500 transition-colors"
-                    >
-                      Complete Checkout
-                    </button>
-                    <button
-                      onClick={() => handleCancel(reservation.id)}
-                      className="px-6 py-3 border border-secondary-200 text-text-secondary rounded-lg font-semibold hover:border-error hover:text-error transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* History */}
-        {historyReservations.length > 0 && (
-          <section>
-            <h2 className="text-2xl font-semibold text-text-primary mb-4 flex items-center gap-2">
-              <span>📜</span> History
-            </h2>
-
-            <div className="space-y-3">
-              {historyReservations.map((reservation) => (
-                <div
-                  key={reservation.id}
-                  className={`bg-white rounded-lg border border-secondary-200 p-6 ${
-                    reservation.status !== 'CONFIRMED' ? 'opacity-60' : ''
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold text-text-primary">
-                        {reservation.productName}
-                      </h3>
-                      <p className="text-sm text-text-secondary">
-                        {new Date(reservation.createdAt).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                        })} • Quantity: {reservation.quantity}
-                      </p>
+                {/* Empty */}
+                {!isLoading && !isError && reservations.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-24 gap-4">
+                        <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center
+                            justify-center text-3xl">
+                            🎫
+                        </div>
+                        <div className="text-center">
+                            <p className="font-semibold text-gray-700">No reservations found</p>
+                            <p className="text-sm text-gray-400 mt-1">
+                                {activeStatus
+                                    ? `No ${activeStatus.toLowerCase()} reservations`
+                                    : 'Start by reserving a product'}
+                            </p>
+                        </div>
+                        <Link
+                            to="/products"
+                            className="mt-2 px-5 py-2.5 bg-indigo-600 text-white text-sm
+                         font-medium rounded-xl hover:bg-indigo-700 transition-colors"
+                        >
+                            Browse products
+                        </Link>
                     </div>
-                    <span className={getStatusBadge(reservation.status)}>
-                      {getStatusIcon(reservation.status)} {reservation.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                )}
+
+                {/* ── Reservation grid ─────────────────────────────── */}
+                {!isLoading && !isError && reservations.length > 0 && (
+                    <>
+                        {/* Pending banner — shown only on All tab */}
+                        {!activeStatus && pendingCount > 0 && (
+                            <div className="mb-6 bg-amber-50 border border-amber-100 rounded-2xl
+                              px-5 py-4 flex items-center gap-3">
+                                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse flex-shrink-0" />
+                                <p className="text-sm text-amber-800">
+                                    You have{' '}
+                                    <span className="font-semibold">{pendingCount} active reservation{pendingCount > 1 ? 's' : ''}</span>
+                                    {' '}— complete checkout before they expire.
+                                </p>
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                            {reservations.map(reservation => (
+                                <ReservationCard
+                                    key={reservation.id}
+                                    reservation={reservation}
+                                    onCheckout={checkout}
+                                    onCancel={cancel}
+                                    isCheckingOut={isCheckingOut}
+                                    isCancelling={isCancelling}
+                                    isThisCheckingOut={isCheckingOut && checkoutingId === reservation.id}
+                                    isThisCancelling={isCancelling && cancellingId === reservation.id}
+                                />
+                            ))}
+                        </div>
+
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            totalElements={totalElements}
+                            pageSize={PAGE_SIZE}
+                            onPageChange={setPage}
+                        />
+                    </>
+                )}
             </div>
-          </section>
-        )}
-      </main>
-    </div>
-  );
+        </div>
+    );
 };
