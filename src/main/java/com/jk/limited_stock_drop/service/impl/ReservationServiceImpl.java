@@ -90,7 +90,9 @@ public class ReservationServiceImpl implements ReservationService {
     @Transactional(readOnly = true)
     @Override
     public PaginatedResponse<ReservationResponse> getUserReservations(Long userId, ReservationFilterRequest filterRequest) {
-        log.info("[RESERVATION-SERVICE] Fetching reservations for user {} with filters: {}", userId, filterRequest);
+        log.info("[RESERVATION-SERVICE] Fetching reservations for user {} with filters: page={}, size={}, sortBy={}, " +
+                        "sortDirection={}, status= {}", userId, filterRequest.getPage(), filterRequest.getSize(), filterRequest.getSortBy(),
+                filterRequest.getSortDirection(), filterRequest.getStatus());
 
         Sort sort = Sort.by(
                 filterRequest.getSortDirection().equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC,

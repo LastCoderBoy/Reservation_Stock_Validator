@@ -74,12 +74,4 @@ public final class AppConstants {
     public static final int MAX_PAGE_SIZE = 100;
     public static final String DEFAULT_SORT_DIRECTION = "desc";
     public static final String DEFAULT_SORT_BY = "name";
-
-    // ========== MDC ==========
-    public static final String MDC_REQUEST_ID = "requestId";
-    public static final String MDC_USER_ID = "userId";
-    public static final String MDC_USERNAME = "username";
-    public static final String MDC_ROLE = "role";
-    public static final String MDC_METHOD = "method";
-    public static final String MDC_PATH = "path";
 }

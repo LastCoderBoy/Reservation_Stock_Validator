@@ -29,7 +29,11 @@ public class ProductController {
     public ResponseEntity<ApiResponse<PaginatedResponse<ProductSummaryResponse>>> getAllProducts(
             @ModelAttribute @Valid ProductFilterRequest filterRequest
     ) {
-        log.info("[PRODUCT-CONTROLLER] Fetching all products");
+        log.info("[PRODUCT-CONTROLLER] Fetching products with filters: page={}, size={}, sortDirection={}, sortBy={}," +
+                "search={}, category={}, inStock={}, minPrice={}, maxPrice={}", filterRequest.getPage(), filterRequest.getSize(),
+                filterRequest.getSortDirection(), filterRequest.getSortBy(), filterRequest.getSearch(), filterRequest.getCategory(),
+                filterRequest.getInStock(), filterRequest.getMinPrice(), filterRequest.getMaxPrice());
+
         PaginatedResponse<ProductSummaryResponse> productSummaryResponse =
                productService.getAllProducts(filterRequest);
 
