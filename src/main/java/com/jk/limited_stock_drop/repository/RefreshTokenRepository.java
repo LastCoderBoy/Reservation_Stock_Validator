@@ -1,10 +1,10 @@
 package com.jk.limited_stock_drop.repository;
 
 import com.jk.limited_stock_drop.entity.RefreshToken;
-import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
@@ -18,9 +18,10 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
 
     @Modifying
     @Query("UPDATE RefreshToken rt " +
-            "SET rt.revoked = true, rt.revokedAt = CURRENT_TIMESTAMP " +
-            "WHERE rt.user.id = :userId AND rt.revoked = false ")
-    int revokeAllByUserId(@Param("userId") Long userId);
+            "SET rt.revoked = true, rt.revokedAt = :revokedAt " +
+            "WHERE rt.user.id = :userId AND rt.revoked = false")
+    int revokeAllByUserId(@Param("userId") Long userId, @Param("revokedAt") Instant revokedAt);
+
 
     @Modifying
     @Query("DELETE FROM RefreshToken rt WHERE rt.expiresAt < :expirationTime OR (rt.revoked = true AND rt.revokedAt < :revokedBeforeTime)")

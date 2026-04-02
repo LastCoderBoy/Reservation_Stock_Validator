@@ -116,7 +116,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void revokeAllRefreshTokensAsync(Long userId) {
         try {
-            int revokedCount = refreshTokenRepository.revokeAllByUserId(userId);
+            int revokedCount = refreshTokenRepository.revokeAllByUserId(userId, Instant.now());
             log.info("[REFRESH-TOKEN-SERVICE] Revoked {} refresh tokens for user: {}", revokedCount, userId);
         } catch (Exception e) {
             log.error("[REFRESH-TOKEN-SERVICE] Error revoking refresh tokens for user {}: {}",
