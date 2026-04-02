@@ -1,6 +1,5 @@
 package com.jk.limited_stock_drop.dto.authorization.request;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 

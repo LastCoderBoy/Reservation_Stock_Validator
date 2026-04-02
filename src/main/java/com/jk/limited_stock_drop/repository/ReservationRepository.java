@@ -39,7 +39,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
                                                       Pageable pageable);
 
     /**
-     * Find reservation by ID and user ID (for authorization)
+     * Find reservation by ID and user ID
      */
     Optional<Reservation> findByIdAndUserId(Long reservationId, Long userId);
 
