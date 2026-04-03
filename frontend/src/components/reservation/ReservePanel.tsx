@@ -111,7 +111,7 @@ export const ReservePanel = ({
     if (reservation && !isExpired) {
         return (
             <div className="space-y-4">
-                <CountdownTimer expiresAt={reservation.expiresAt} onExpired={handleExpired} />
+                <CountdownTimer remainingSeconds={reservation.remainingSeconds} onExpired={handleExpired} />
 
                 <div className="bg-gray-50 rounded-xl p-4 text-sm space-y-1.5">
                     <div className="flex justify-between text-gray-600">

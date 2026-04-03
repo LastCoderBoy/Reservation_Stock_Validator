@@ -1,12 +1,12 @@
 import { useCountdown } from '../../hooks/useCountdown';
 
 interface CountdownTimerProps {
-    expiresAt: string;
+    remainingSeconds: number;
     onExpired?: () => void;
 }
 
-export const CountdownTimer = ({ expiresAt, onExpired }: CountdownTimerProps) => {
-    const { formattedTime, isExpired, seconds } = useCountdown(expiresAt);
+export const CountdownTimer = ({ remainingSeconds, onExpired }: CountdownTimerProps) => {
+    const { formattedTime, isExpired, seconds } = useCountdown(remainingSeconds);
 
     // Notify parent when timer hits zero
     if (isExpired && onExpired) {

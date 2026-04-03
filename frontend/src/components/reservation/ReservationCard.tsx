@@ -119,7 +119,7 @@ export const ReservationCard = ({
             {/* Countdown — only for active PENDING */}
             {reservation.status === 'PENDING' && !isExpired && (
                 <CountdownTimer
-                    expiresAt={reservation.expiresAt}
+                    remainingSeconds={reservation.remainingSeconds}
                     onExpired={() => setIsExpired(true)}
                 />
             )}

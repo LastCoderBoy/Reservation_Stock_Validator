@@ -6,23 +6,21 @@ interface UseCountdownResult {
   formattedTime: string;
 }
 
-export const useCountdown = (expiresAt: string | null): UseCountdownResult => {
-  const calculateRemaining = (): number => {
-    if (!expiresAt) return 0;
-    const diff = Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000);
-    return Math.max(0, diff);
-  };
-
-  const [seconds, setSeconds] = useState<number>(calculateRemaining);
+/**
+ * Countdown hook that uses remainingSeconds from the server.
+ * This avoids timezone issues between server and client.
+ */
+export const useCountdown = (initialSeconds: number): UseCountdownResult => {
+  const [seconds, setSeconds] = useState<number>(Math.max(0, initialSeconds));
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    if (!expiresAt) {
-      setSeconds(0);
+    // Reset when initialSeconds changes (e.g., new reservation)
+    setSeconds(Math.max(0, initialSeconds));
+
+    if (initialSeconds <= 0) {
       return;
     }
-
-    setSeconds(calculateRemaining());
 
     intervalRef.current = setInterval(() => {
       setSeconds(prev => {
@@ -37,7 +35,7 @@ export const useCountdown = (expiresAt: string | null): UseCountdownResult => {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [expiresAt]);
+  }, [initialSeconds]);
 
   const isExpired = seconds === 0;
 
