@@ -41,8 +41,14 @@ RUN chown -R appuser:appgroup /app
 
 USER appuser
 
-# JVM optimization for containers
-ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom"
+# JVM optimization for containers (optimized for Render free tier 512MB)
+ENV JAVA_OPTS="-XX:+UseContainerSupport \
+    -XX:MaxRAMPercentage=70.0 \
+    -XX:InitialRAMPercentage=50.0 \
+    -XX:+UseG1GC \
+    -XX:+UseStringDeduplication \
+    -Xss256k \
+    -Djava.security.egd=file:/dev/./urandom"
 
 EXPOSE 8080
 
