@@ -54,7 +54,6 @@ application-local.properties
 
 # Dependencies
 frontend/node_modules/
-frontend/package-lock.json
 
 # Build output
 frontend/dist/
