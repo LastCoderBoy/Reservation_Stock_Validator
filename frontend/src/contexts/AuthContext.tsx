@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import type { AuthUser } from '../types';
+import { resetRefreshState } from '../api/client';
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -21,12 +22,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   });
 
   const login = (authUser: AuthUser, token: string) => {
+    resetRefreshState(); // Reset refresh state on login
     localStorage.setItem('accessToken', token);
     localStorage.setItem('authUser', JSON.stringify(authUser));
     setUser(authUser);
   };
 
   const logout = () => {
+    resetRefreshState(); // Reset refresh state on logout
     localStorage.removeItem('accessToken');
     localStorage.removeItem('authUser');
     setUser(null);
@@ -36,6 +39,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const handler = (e: StorageEvent) => {
       if (e.key === 'accessToken' && !e.newValue) {
+        resetRefreshState();
         setUser(null);
       }
     };

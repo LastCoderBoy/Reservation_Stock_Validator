@@ -21,6 +21,7 @@ const refreshApi = axios.create({
 
 // Track if a refresh is in progress to prevent concurrent refresh calls
 let isRefreshing = false;
+let refreshFailed = false; // Prevent retry loops after refresh failure
 let refreshSubscribers: ((token: string) => void)[] = [];
 
 const subscribeTokenRefresh = (callback: (token: string) => void) => {
@@ -30,6 +31,13 @@ const subscribeTokenRefresh = (callback: (token: string) => void) => {
 const onTokenRefreshed = (token: string) => {
   refreshSubscribers.forEach((callback) => callback(token));
   refreshSubscribers = [];
+};
+
+const clearAuthAndReject = (error: unknown) => {
+  localStorage.removeItem('accessToken');
+  refreshFailed = true;
+  // Don't redirect here - let the app handle it naturally
+  return Promise.reject(error);
 };
 
 api.interceptors.request.use((config) => {
@@ -50,15 +58,29 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // Don't retry if refresh already failed this session
+    if (refreshFailed) {
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
+      // Skip refresh if no access token exists (user not logged in)
+      if (!localStorage.getItem('accessToken')) {
+        return Promise.reject(error);
+      }
+
       if (isRefreshing) {
         // Wait for the ongoing refresh to complete
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
           subscribeTokenRefresh((token: string) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            resolve(api(originalRequest));
+            if (token) {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+              resolve(api(originalRequest));
+            } else {
+              reject(error);
+            }
           });
         });
       }
@@ -69,13 +91,15 @@ api.interceptors.response.use(
         const { data } = await refreshApi.post('/auth/refresh-token');
         const newToken = data.data.accessToken;
         localStorage.setItem('accessToken', newToken);
+        refreshFailed = false; // Reset on successful refresh
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         onTokenRefreshed(newToken);
         return api(originalRequest);
       } catch {
-        localStorage.removeItem('accessToken');
-        window.location.href = '/login';
-        return Promise.reject(error);
+        // Clear subscribers with empty token to signal failure
+        refreshSubscribers.forEach((callback) => callback(''));
+        refreshSubscribers = [];
+        return clearAuthAndReject(error);
       } finally {
         isRefreshing = false;
       }
@@ -84,3 +108,10 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Export function to reset refresh state (call on login/logout)
+export const resetRefreshState = () => {
+  refreshFailed = false;
+  isRefreshing = false;
+  refreshSubscribers = [];
+};
